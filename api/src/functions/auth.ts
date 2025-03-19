@@ -62,6 +62,29 @@ export const handler = async (
     // by the `logIn()` function from `useAuth()` in the form of:
     // `{ message: 'Error message' }`
     handler: (user) => {
+      const loginExpiresAt = new Date(user.loginTokenExpiresAt)
+      const now = new Date()
+
+      if (loginExpiresAt < now) {
+        throw new Error('Login token expired')
+      }
+
+      // if the user logged in with a token we need to break
+      // the token.  We'll do this by clearing the salt and
+      // expiration
+      // this will make the token a one-time use
+      // if the user logged in with a token we need to break
+      // the token.  We'll do this by clearing the salt and
+      // expiration
+      // this will make the token a one-time use
+      db.user.update({
+        where: { id: user.id },
+        data: {
+          loginTokenExpiresAt: null,
+          salt: null,
+        },
+      })
+
       return user
     },
 
@@ -71,7 +94,7 @@ export const handler = async (
       // For security reasons you may want to make this the same as the
       // usernameNotFound error so that a malicious user can't use the error
       // to narrow down if it's the username or password that's incorrect
-      incorrectPassword: 'Incorrect password for ${username}',
+      incorrectPassword: 'Incorrect token',
     },
 
     // How long a user will remain logged in, in seconds
@@ -125,18 +148,13 @@ export const handler = async (
     //
     // If this returns anything else, it will be returned by the
     // `signUp()` function in the form of: `{ message: 'String here' }`.
-    handler: ({
-      username,
-      hashedPassword,
-      salt,
-      userAttributes: _userAttributes,
-    }) => {
+    handler: ({ username, hashedPassword, userAttributes }) => {
       return db.user.create({
         data: {
           email: username,
-          hashedPassword: hashedPassword,
-          salt: salt,
-          // name: userAttributes.name
+          loginToken: hashedPassword,
+          salt: null,
+          name: userAttributes.name,
         },
       })
     },
@@ -169,7 +187,7 @@ export const handler = async (
     authFields: {
       id: 'id',
       username: 'email',
-      hashedPassword: 'hashedPassword',
+      hashedPassword: 'loginToken',
       salt: 'salt',
       resetToken: 'resetToken',
       resetTokenExpiresAt: 'resetTokenExpiresAt',

@@ -14,6 +14,21 @@ import { toast, Toaster } from '@redwoodjs/web/toast'
 
 import { useAuth } from 'src/auth'
 
+function randomString(length?: number | undefined) {
+  const defaultLength = 32
+  const characterSet =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const array = new Uint8Array(length || defaultLength)
+
+  window.crypto.getRandomValues(array)
+
+  const returnString = Array.from(array)
+    .map((value) => characterSet[value % characterSet.length])
+    .join('')
+
+  return returnString
+}
+
 const SignupPage = () => {
   const { isAuthenticated, signUp } = useAuth()
 
@@ -32,7 +47,7 @@ const SignupPage = () => {
   const onSubmit = async (data: Record<string, string>) => {
     const response = await signUp({
       username: data.username,
-      password: data.password,
+      password: randomString(),
     })
 
     if (response.message) {
@@ -65,7 +80,7 @@ const SignupPage = () => {
                     className="rw-label"
                     errorClassName="rw-label rw-label-error"
                   >
-                    Username
+                    Email
                   </Label>
                   <TextField
                     name="username"
@@ -75,32 +90,11 @@ const SignupPage = () => {
                     validation={{
                       required: {
                         value: true,
-                        message: 'Username is required',
+                        message: 'Email is required',
                       },
                     }}
                   />
                   <FieldError name="username" className="rw-field-error" />
-
-                  <Label
-                    name="password"
-                    className="rw-label"
-                    errorClassName="rw-label rw-label-error"
-                  >
-                    Password
-                  </Label>
-                  <PasswordField
-                    name="password"
-                    className="rw-input"
-                    errorClassName="rw-input rw-input-error"
-                    autoComplete="current-password"
-                    validation={{
-                      required: {
-                        value: true,
-                        message: 'Password is required',
-                      },
-                    }}
-                  />
-                  <FieldError name="password" className="rw-field-error" />
 
                   <div className="rw-button-group">
                     <Submit className="rw-button rw-button-blue">
